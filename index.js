@@ -1,7 +1,28 @@
-console.log('Loading function');
+// * 各イベントの取得可能な値は下記を参照して下さい。
+// リファレンス: https://developer.github.com/v3/activity/events/types/
+
+//※ デフォルトのAPIGateWay設定ではlambda関数はheaderを取得できないため、以下の設定をする必要があります。
+// * APIGateWay設定
+//   * メソッドリクエスト
+//     * HTTP リクエストヘッダー: content-type, X-GitHub-Event
+//   * 統合リクエスト
+//     * マッピングテンプレート
+//       * Content-Type: application/json
+//       * テンプレート(以下)
+//{
+//    "method": "$context.httpMethod",
+//    "body" : $input.json('$'),
+//    "headers": {
+//        #foreach($param in $input.params().header.keySet())
+//        "$param": "$util.escapeJavaScript($input.params().header.get($param))"
+//        #if($foreach.hasNext),#end
+//        #end
+//    }
+//}
+
 const https = require('https');
 const url = require('url');
-const slack_url = process.env.SLACK_WEBHOOK_URL;
+const slack_url = process.env.SLACK_WEBHOOK_URL; //環境変数はLambdaのテキストフィールドに入力
 const slack_req_opts = url.parse(slack_url);
 slack_req_opts.method = 'POST';
 slack_req_opts.headers = {'Content-Type': 'application/json'};
@@ -46,10 +67,10 @@ exports.handler = function(event, context) {
       case 'create':
       case 'delete':
         if(body.ref_type === 'tag'){
-          event_url = body.repository.git_tags_url;
+          event_url = body.repository.html_url + '/tree/' + body.ref;
           event_name = event_type + ' ' + body.ref_type;
         }else if(body.ref_type === 'branch'){
-          event_url = body.repository.branches_url;
+          event_url = body.repository.html_url + '/tree/' + body.ref;
           event_name = event_type + ' ' + body.ref_type;
         }
         break;
